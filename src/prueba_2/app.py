@@ -79,28 +79,6 @@ def delete_user(id:int):
   click.echo(f"{email[0]} fue eliminado") 
 
 @main.command()
-@click.option('--email', '-e',required=True,type=str)
-def delete_user(email:str):
-  '''
-    Elimina un usuario por email
-    
-    Parameters
-    ----------\n
-    email : int
-        El email del usuario a elminar\n
-        
-    Returns
-    -------\n
-    User:  Retorna el __str__ del objeto User a elminar
-    '''
-  user = db.session.query(User).filter(User.email==email)
-  email = user.all()
-  if len(email) == 0: return click.echo(f"El usuario con email {email} no está en el sistema") 
-  user.delete()
-  db.session.commit()
-  return click.echo(f"{email[0]} fue eliminado") 
-
-@main.command()
 @click.option('--id', '-i',required=True,type=int)
 @click.option('--name', '-n',type=str)
 @click.option('--last_name', '-l',type=str)
@@ -129,14 +107,17 @@ def update_user(id,name,last_name,age,email):
   if name: values["name"] = name
   if last_name: values["last_name"] = last_name
   if age: values["age"] = age
-  if last_name: values["email"] = email
+  if email: values["email"] = email
   user = db.session.query(User).filter(User.id==id)
   try:
     user_obj = user.one()
   except NoResultFound as _:
     click.echo(f"No se encontró el usuario con id {id}")
     return
-  user.update(values)
+  try:
+    user.update(values)
+  except IntegrityError as _:
+    return click.echo(f"El usuario no puede tener este email, ya le pertenece a otro usuario")
   db.session.commit()
   click.echo(user_obj) 
 
